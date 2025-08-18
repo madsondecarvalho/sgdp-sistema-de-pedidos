@@ -1,7 +1,7 @@
-// Import the framework and instantiate it
 import Fastify from 'fastify'
 import { serializerCompiler, validatorCompiler, ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod/v4';
+import { clientRoutes } from './routes/cliente.route';
 
 const app = Fastify({
   logger: true
@@ -10,11 +10,11 @@ const app = Fastify({
 app.setValidatorCompiler(validatorCompiler);
 app.setSerializerCompiler(serializerCompiler);
 
-// Declare a route
+app.register(clientRoutes);
+
 app.withTypeProvider<ZodTypeProvider>().route({
   method: 'GET',
   url: '/',
-  // Define your schema
   schema: {
     querystring: z.object({
       name: z.string().min(4),
@@ -28,7 +28,6 @@ app.withTypeProvider<ZodTypeProvider>().route({
   },
 });
 
-// Run the server!
 (async () => {
   try {
     await app.listen({ port: 3333 });
