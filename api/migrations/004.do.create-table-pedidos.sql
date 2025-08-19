@@ -1,0 +1,6 @@
+CREATE TABLE pedidos (
+    id VARCHAR(36) PRIMARY KEY,
+    data TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    id_cliente VARCHAR(36) NOT NULL,
+    FOREIGN KEY (id_cliente) REFERENCES clientes(id)
+);
