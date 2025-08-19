@@ -1,6 +1,8 @@
 import Fastify from 'fastify';
 import fastifyMySQL from '@fastify/mysql';
 import { clientRoutes } from './routes/cliente.route';
+import { pedidoRoutes } from './routes/pedido.route';
+
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 
 const app = Fastify({
@@ -34,6 +36,7 @@ app.register(fastifyMySQL, {
 
 // Registro de rotas
 app.register(clientRoutes);
+app.register(pedidoRoutes);
 
 // Inicialização do servidor
 const start = async () => {
