@@ -13,9 +13,14 @@ export async function clientRoutes(app: FastifyInstance) {
   });
 
   // Rota para buscar cliente por ID
-  app.route({
+  app.withTypeProvider<ZodTypeProvider>().route({
     method: 'GET',
     url: '/clientes/:id',
+    schema: {
+      params: z.object({
+        id: z.uuid({ message: "O ID fornecido não é um UUID válido." })
+      })
+    },
     handler: clientController.getById
   });
 
@@ -33,16 +38,30 @@ export async function clientRoutes(app: FastifyInstance) {
   });
 
   // Rota para atualizar um cliente
-  app.route({
+  app.withTypeProvider<ZodTypeProvider>().route({
     method: 'PUT',
     url: '/clientes/:id',
-    handler: clientController.update
+    handler: clientController.update,
+    schema: {
+      body: z.object({
+        nome: z.string().describe('Nome do cliente'),
+        email: z.string().describe('E-mail do cliente'),
+      }),
+      params: z.object({
+        id: z.uuid({ message: "O ID fornecido não é um UUID válido." })
+      })
+    },
   });
 
   // Rota para excluir um cliente
-  app.route({
+  app.withTypeProvider<ZodTypeProvider>().route({
     method: 'DELETE',
     url: '/clientes/:id',
+    schema: {
+      params: z.object({
+        id: z.uuid({ message: "O ID fornecido não é um UUID válido." })
+      })
+    },
     handler: clientController.delete
   });
 }
