@@ -1,12 +1,5 @@
-import { FastifyReply, FastifyRequest } from 'fastify';
-import { z } from 'zod/v4';
-import { clientSchema } from '../models/cliente.model';
+import { FastifyRequest, FastifyReply } from 'fastify';
 import { clientService } from '../services/cliente.service';
-
-// Schema para validação do parâmetro ID
-const idParamSchema = z.object({
-  id: z.string(),
-});
 
 export const clientController = {
   // Listar todos os clientes
@@ -15,14 +8,15 @@ export const clientController = {
       const clients = await clientService.findAll(request.server);
       return reply.code(200).send({ clients });
     } catch (error) {
+      request.log.error('Erro ao buscar clientes:', error);
       return reply.code(500).send({ message: 'Erro interno ao buscar clientes' });
     }
   },
 
   // Obter um cliente pelo ID
-  getById: async (request: FastifyRequest<{ Params: z.infer<typeof idParamSchema> }>, reply: FastifyReply) => {
+  getById: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const { id } = request.params;
+      const { id } = request.params as { id: string };
       const client = await clientService.findById(request.server, id);
 
       if (!client) {
@@ -31,34 +25,38 @@ export const clientController = {
 
       return reply.code(200).send({ client });
     } catch (error) {
-      request.log.error(`Erro ao buscar cliente ${request.params.id}:`);
+      request.log.error(`Erro ao buscar cliente:`, error);
       return reply.code(500).send({ message: 'Erro interno ao buscar cliente' });
     }
   },
 
   // Criar um novo cliente
-  create: async (request: FastifyRequest<{ Body: z.infer<typeof clientSchema> }>, reply: FastifyReply) => {
+  create: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const newClient = await clientService.create(request.server, request.body);
+      const clientData = request.body as any;
+      
+      // Validação manual básica
+      if (!clientData.name || !clientData.email) {
+        return reply.code(400).send({ 
+          message: 'Dados inválidos. Nome e email são obrigatórios.' 
+        });
+      }
+      
+      const newClient = await clientService.create(request.server, clientData);
       return reply.code(201).send({ client: newClient });
     } catch (error) {
-      request.log.error('Erro ao criar cliente:');
-      
+      request.log.error('Erro ao criar cliente:', error);
       return reply.code(500).send({ message: 'Erro interno ao criar cliente' });
     }
   },
 
   // Atualizar um cliente existente
-  update: async (
-    request: FastifyRequest<{ 
-      Params: z.infer<typeof idParamSchema>,
-      Body: Partial<z.infer<typeof clientSchema>> 
-    }>, 
-    reply: FastifyReply
-  ) => {
+  update: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const { id } = request.params;
-      const updatedClient = await clientService.update(request.server, id, request.body);
+      const { id } = request.params as { id: string };
+      const clientData = request.body as any;
+      
+      const updatedClient = await clientService.update(request.server, id, clientData);
 
       if (!updatedClient) {
         return reply.code(404).send({ message: 'Cliente não encontrado' });
@@ -66,16 +64,15 @@ export const clientController = {
 
       return reply.code(200).send({ client: updatedClient });
     } catch (error) {
-      request.log.error(`Erro ao atualizar cliente ${request.params.id}:`);
-        
+      request.log.error(`Erro ao atualizar cliente:`, error);
       return reply.code(500).send({ message: 'Erro interno ao atualizar cliente' });
     }
   },
 
   // Excluir um cliente
-  delete: async (request: FastifyRequest<{ Params: z.infer<typeof idParamSchema> }>, reply: FastifyReply) => {
+  delete: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const { id } = request.params;
+      const { id } = request.params as { id: string };
       const deleted = await clientService.delete(request.server, id);
 
       if (!deleted) {
@@ -84,7 +81,7 @@ export const clientController = {
 
       return reply.code(204).send();
     } catch (error) {
-      request.log.error(`Erro ao excluir cliente ${request.params.id}:`);
+      request.log.error(`Erro ao excluir cliente:`, error);
       return reply.code(500).send({ message: 'Erro interno ao excluir cliente' });
     }
   }
