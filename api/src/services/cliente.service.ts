@@ -1,12 +1,12 @@
 import { FastifyInstance } from 'fastify';
 import { v4 as uuidv4 } from 'uuid';
-import { Client } from '../models/cliente.model';
+import { Client } from '../entities/cliente.entity';
 
 class ClientService {
   // Listar todos os clientes
   async findAll(fastify: FastifyInstance) {
     try {
-      const [rows] = await fastify.mysql.query('SELECT * FROM clientes');
+      const [rows] = await (fastify as any).mysql.query('SELECT * FROM clientes');
       return this.formatClientList(rows as any[]);
     } catch (error) {
       console.error('Error in findAll:', error);
@@ -17,7 +17,7 @@ class ClientService {
   // Buscar um cliente pelo ID
   async findById(fastify: FastifyInstance, id: string) {
     try {
-      const [rows] = await fastify.mysql.query(
+      const [rows] = await (fastify as any).mysql.query(
         'SELECT * FROM clientes WHERE id = ?',
         [id]
       );
@@ -38,7 +38,7 @@ class ClientService {
       const id = uuidv4();
       const { name: nome, email } = clientData;
 
-      await fastify.mysql.query(
+      await (fastify as any).mysql.query(
         'INSERT INTO clientes (id, nome, email) VALUES (?, ?, ?)',
         [id, nome, email || null]
       );
@@ -80,7 +80,7 @@ class ClientService {
       values.push(id);
 
       // Executa a query de atualização
-      await fastify.mysql.query(
+      await (fastify as any).mysql.query(
         `UPDATE clientes SET ${updateParts.join(', ')} WHERE id = ?`,
         values
       );
@@ -96,7 +96,7 @@ class ClientService {
   // Excluir um cliente
   async delete(fastify: FastifyInstance, id: string): Promise<boolean> {
     try {
-      const [result] = await fastify.mysql.query(
+      const [result] = await (fastify as any).mysql.query(
         'DELETE FROM clientes WHERE id = ?',
         [id]
       );

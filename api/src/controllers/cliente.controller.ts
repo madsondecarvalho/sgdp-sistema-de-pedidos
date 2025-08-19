@@ -7,8 +7,9 @@ export const clientController = {
     try {
       const clients = await clientService.findAll(request.server);
       return reply.code(200).send({ clients });
-    } catch (error) {
-      request.log.error('Erro ao buscar clientes:', error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      request.log.error(`Erro ao buscar clientes: ${errorMessage}`);
       return reply.code(500).send({ message: 'Erro interno ao buscar clientes' });
     }
   },
@@ -24,8 +25,9 @@ export const clientController = {
       }
 
       return reply.code(200).send({ client });
-    } catch (error) {
-      request.log.error(`Erro ao buscar cliente:`, error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      request.log.error(`Erro ao buscar cliente: ${errorMessage}`);
       return reply.code(500).send({ message: 'Erro interno ao buscar cliente' });
     }
   },
@@ -34,18 +36,19 @@ export const clientController = {
   create: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const clientData = request.body as any;
-      
+
       // Validação manual básica
       if (!clientData.name || !clientData.email) {
-        return reply.code(400).send({ 
-          message: 'Dados inválidos. Nome e email são obrigatórios.' 
+        return reply.code(400).send({
+          message: 'Dados inválidos. Nome e email são obrigatórios.'
         });
       }
-      
+
       const newClient = await clientService.create(request.server, clientData);
       return reply.code(201).send({ client: newClient });
-    } catch (error) {
-      request.log.error('Erro ao criar cliente:', error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      request.log.error(`Erro ao criar cliente: ${errorMessage}`);
       return reply.code(500).send({ message: 'Erro interno ao criar cliente' });
     }
   },
@@ -55,7 +58,7 @@ export const clientController = {
     try {
       const { id } = request.params as { id: string };
       const clientData = request.body as any;
-      
+
       const updatedClient = await clientService.update(request.server, id, clientData);
 
       if (!updatedClient) {
@@ -63,8 +66,9 @@ export const clientController = {
       }
 
       return reply.code(200).send({ client: updatedClient });
-    } catch (error) {
-      request.log.error(`Erro ao atualizar cliente:`, error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      request.log.error(`Erro ao atualizar cliente: ${errorMessage}`);
       return reply.code(500).send({ message: 'Erro interno ao atualizar cliente' });
     }
   },
@@ -80,8 +84,9 @@ export const clientController = {
       }
 
       return reply.code(204).send();
-    } catch (error) {
-      request.log.error(`Erro ao excluir cliente:`, error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      request.log.error(`Erro ao excluir cliente: ${errorMessage}`);
       return reply.code(500).send({ message: 'Erro interno ao excluir cliente' });
     }
   }
