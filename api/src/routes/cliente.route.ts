@@ -1,5 +1,8 @@
 import { FastifyInstance } from 'fastify';
 import { clientController } from '../controllers/cliente.controller';
+import { z } from 'zod/v4';
+import { ZodTypeProvider } from 'fastify-type-provider-zod';
+
 
 export async function clientRoutes(app: FastifyInstance) {
   // Rota para listar todos os clientes
@@ -17,9 +20,15 @@ export async function clientRoutes(app: FastifyInstance) {
   });
 
   // Rota para criar um novo cliente
-  app.route({
+  app.withTypeProvider<ZodTypeProvider>().route({
     method: 'POST',
     url: '/clientes',
+    schema: {
+      body: z.object({
+        nome: z.string().describe('Nome do cliente'),
+        email: z.string().describe('E-mail do cliente'),
+      })
+    },
     handler: clientController.create
   });
 

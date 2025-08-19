@@ -38,7 +38,7 @@ export const clientController = {
       const clientData = request.body as any;
 
       // Validação manual básica
-      if (!clientData.name || !clientData.email) {
+      if (!clientData.nome || !clientData.email) {
         return reply.code(400).send({
           message: 'Dados inválidos. Nome e email são obrigatórios.'
         });

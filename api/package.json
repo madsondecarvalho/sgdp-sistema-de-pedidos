@@ -23,8 +23,7 @@
     "mysql2": "^3.14.3",
     "postgrator": "^8.0.0",
     "postgrator-cli": "^9.0.1",
-    "uuid": "^11.1.0",
-    "zod": "^4.0.17"
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",

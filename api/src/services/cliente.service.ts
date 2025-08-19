@@ -36,7 +36,7 @@ class ClientService {
   async create(fastify: FastifyInstance, clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) {
     try {
       const id = uuidv4();
-      const { name: nome, email } = clientData;
+      const { nome, email } = clientData;
 
       await (fastify as any).mysql.query(
         'INSERT INTO clientes (id, nome, email) VALUES (?, ?, ?)',
@@ -61,9 +61,9 @@ class ClientService {
       const updateParts = [];
       const values = [];
 
-      if (data.name !== undefined) {
+      if (data.nome !== undefined) {
         updateParts.push('nome = ?');
-        values.push(data.name);
+        values.push(data.nome);
       }
 
       if (data.email !== undefined) {
@@ -112,7 +112,7 @@ class ClientService {
   private formatClient(dbClient: any): Client {
     return {
       id: dbClient.id, // Corrigido: agora usa o campo id em vez de id_cliente
-      name: dbClient.nome,
+      nome: dbClient.nome,
       email: dbClient.email,
       createdAt: dbClient.created_at ? new Date(dbClient.created_at).toISOString() as string : undefined,
       updatedAt: dbClient.updated_at ? new Date(dbClient.updated_at).toISOString() as string : undefined,

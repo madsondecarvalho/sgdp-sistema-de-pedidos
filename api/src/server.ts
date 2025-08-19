@@ -1,10 +1,15 @@
 import Fastify from 'fastify';
 import fastifyMySQL from '@fastify/mysql';
 import { clientRoutes } from './routes/cliente.route';
+import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 
 const app = Fastify({
   logger: true
 });
+
+// Add schema validator and serializer
+app.setValidatorCompiler(validatorCompiler);
+app.setSerializerCompiler(serializerCompiler);
 
 // Tratador de erros global simplificado
 app.setErrorHandler((error, request, reply) => {
