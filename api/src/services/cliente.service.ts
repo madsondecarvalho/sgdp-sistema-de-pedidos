@@ -1,80 +1,127 @@
-import { Client, clientSchema } from '../models/cliente.model';
+import { FastifyInstance } from 'fastify';
+import { v4 as uuidv4 } from 'uuid';
+import { Client } from '../models/cliente.model';
 
-// Função para serializar um cliente (converte Date para string ISO)
-function serializeClient(client: Client) {
-  return {
-    ...client,
-    createdAt: client.createdAt?.toISOString(),
-    updatedAt: client.updatedAt?.toISOString(),
-  };
-}
-
-// Simulando um banco de dados em memória
 class ClientService {
-  private clients: Client[] = [];
-
-  constructor() {
-    // Adicionando alguns clientes para teste
-    this.clients = [
-      {
-        id: '1',
-        name: 'João Silva',
-        email: 'joao@example.com',
-        phone: '11999998888',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      {
-        id: '2',
-        name: 'Maria Souza',
-        email: 'maria@example.com',
-        phone: '11988887777',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    ];
+  // Listar todos os clientes
+  async findAll(fastify: FastifyInstance) {
+    try {
+      const [rows] = await fastify.mysql.query('SELECT * FROM clientes');
+      return this.formatClientList(rows as any[]);
+    } catch (error) {
+      console.error('Error in findAll:', error);
+      throw error;
+    }
   }
 
-  findAll() {
-    // Serializa todos os clientes antes de retornar
-    return this.clients.map(serializeClient);
+  // Buscar um cliente pelo ID
+  async findById(fastify: FastifyInstance, id: string) {
+    try {
+      const [rows] = await fastify.mysql.query(
+        'SELECT * FROM clientes WHERE id = ?',
+        [id]
+      );
+
+      const clients = rows as any[];
+      if (clients.length === 0) return null;
+
+      return this.formatClient(clients[0]);
+    } catch (error) {
+      console.error(`Error in findById (${id}):`, error);
+      throw error;
+    }
   }
 
-  findById(id: string) {
-    const client = this.clients.find(client => client.id === id);
-    return client ? serializeClient(client) : undefined;
+  // Criar um novo cliente
+  async create(fastify: FastifyInstance, clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) {
+    try {
+      const id = uuidv4();
+      const { name: nome, email } = clientData;
+
+      await fastify.mysql.query(
+        'INSERT INTO clientes (id, nome, email) VALUES (?, ?, ?)',
+        [id, nome, email || null]
+      );
+
+      return this.findById(fastify, id);
+    } catch (error) {
+      console.error('Error in create:', error);
+      throw error;
+    }
   }
 
-  create(clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) {
-    const newClient: Client = {
-      ...clientData,
-      id: crypto.randomUUID(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
+  // Atualizar um cliente existente
+  async update(fastify: FastifyInstance, id: string, data: Partial<Client>) {
+    try {
+      // Verificar se o cliente existe
+      const existingClient = await this.findById(fastify, id);
+      if (!existingClient) return null;
+
+      // Construir a query de atualização dinamicamente
+      const updateParts = [];
+      const values = [];
+
+      if (data.name !== undefined) {
+        updateParts.push('nome = ?');
+        values.push(data.name);
+      }
+
+      if (data.email !== undefined) {
+        updateParts.push('email = ?');
+        values.push(data.email);
+      }
+
+      // Se não houver campos para atualizar, retorne o cliente existente
+      if (updateParts.length === 0) {
+        return existingClient;
+      }
+
+      // Adiciona o ID como último parâmetro
+      values.push(id);
+
+      // Executa a query de atualização
+      await fastify.mysql.query(
+        `UPDATE clientes SET ${updateParts.join(', ')} WHERE id = ?`,
+        values
+      );
+
+      // Retorna o cliente atualizado
+      return this.findById(fastify, id);
+    } catch (error) {
+      console.error(`Error in update (${id}):`, error);
+      throw error;
+    }
+  }
+
+  // Excluir um cliente
+  async delete(fastify: FastifyInstance, id: string): Promise<boolean> {
+    try {
+      const [result] = await fastify.mysql.query(
+        'DELETE FROM clientes WHERE id = ?',
+        [id]
+      );
+
+      return (result as any).affectedRows > 0;
+    } catch (error) {
+      console.error(`Error in delete (${id}):`, error);
+      throw error;
+    }
+  }
+
+  // Função auxiliar para formatar um cliente (converter snake_case para camelCase)
+  private formatClient(dbClient: any): Client {
+    return {
+      id: dbClient.id, // Corrigido: agora usa o campo id em vez de id_cliente
+      name: dbClient.nome,
+      email: dbClient.email,
+      createdAt: dbClient.created_at ? new Date(dbClient.created_at).toISOString() as string : undefined,
+      updatedAt: dbClient.updated_at ? new Date(dbClient.updated_at).toISOString() as string : undefined,
     };
-    
-    this.clients.push(newClient);
-    return serializeClient(newClient);
   }
 
-  update(id: string, data: Partial<Client>) {
-    const clientIndex = this.clients.findIndex(client => client.id === id);
-    
-    if (clientIndex === -1) return undefined;
-    
-    this.clients[clientIndex] = {
-      ...this.clients[clientIndex],
-      ...data,
-      updatedAt: new Date(),
-    };
-    
-    return serializeClient(this.clients[clientIndex]);
-  }
-
-  delete(id: string): boolean {
-    const initialLength = this.clients.length;
-    this.clients = this.clients.filter(client => client.id !== id);
-    return initialLength > this.clients.length;
+  // Função auxiliar para formatar uma lista de clientes
+  private formatClientList(dbClients: any[]): Client[] {
+    return dbClients.map(client => this.formatClient(client));
   }
 }
 

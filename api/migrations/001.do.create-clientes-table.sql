@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS clientes (
+    id VARCHAR(36) PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- índice para E-mail
+CREATE INDEX idx_clients_email ON clientes(email);
