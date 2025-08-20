@@ -31,8 +31,12 @@ app.get('/', async (request, reply) => {
 });
 
 // Registro do banco de dados
+const connectionString = process.env.NODE_ENV === 'testing' 
+  ? process.env.MYSQL_CONNECTION_STRING_TEST 
+  : process.env.MYSQL_CONNECTION_STRING;
+
 app.register(fastifyMySQL, {
-  connectionString: process.env.MYSQL_CONNECTION_STRING,
+  connectionString,
   promise: true
 });
 
@@ -44,8 +48,14 @@ app.register(produtoRoutes);
 // Inicialização do servidor
 const start = async () => {
   try {
-    await app.listen({ port: 3333 });
-    console.log('Servidor rodando em http://localhost:3333');
+    // Use the PORT environment variable or default to 3333
+    const port = parseInt(process.env.PORT || '3333');
+    
+    await app.listen({ 
+      port: port,
+      host: '0.0.0.0'
+    });
+    console.log(`Servidor rodando em http://localhost:${port}`);
   } catch (err) {
     app.log.error(err);
     process.exit(1);

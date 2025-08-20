@@ -1,6 +1,5 @@
-version: '3.8'
-
 services:
+  # Database for both development and production
   mysql:
     image: mysql:8.0 
     container_name: znap-mysql
@@ -15,6 +14,65 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "znap_user", "--password=znap_password"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Development API service
+  api_dev:
+    profiles: ["dev"]
+    build: 
+      context: ./api
+    container_name: znap-api-dev
+    restart: unless-stopped
+    environment:
+      # Variables for Postgrator
+      - NODE_ENV=development
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=znap_user
+      - DB_PASSWORD=znap_password
+      - DB_DATABASE=pedidos_service
+      # Variables for server.ts
+      - MYSQL_CONNECTION_STRING=mysql://znap_user:znap_password@mysql:3306/pedidos_service
+      - PORT=3333
+    ports:
+      - "3333:3333"
+    volumes:
+      - ./api:/app
+      - /app/node_modules
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: >
+      sh -c "npm install && npm run migrate && npm run start:dev"
+
+  # Test MySQL instance for integration tests
+  mysql_test:
+    profiles: ["test"]
+    image: mysql:8.0
+    container_name: znap-mysql-test
+    restart: "no"
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: pedidos_service_test
+      MYSQL_USER: test_user
+      MYSQL_PASSWORD: test_password
+    ports:
+      - "3307:3306"
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "test_user", "--password=test_password"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+networks:
+  default:
+    name: znap-network
+    driver: bridge
 
 volumes:
   mysql_data:
