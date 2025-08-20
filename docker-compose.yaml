@@ -1,6 +1,7 @@
 services:
   # Database for both development and production
   mysql:
+    profiles: ["dev"]
     image: mysql:8.0 
     container_name: znap-mysql
     restart: unless-stopped
@@ -54,7 +55,7 @@ services:
     profiles: ["test"]
     image: mysql:8.0
     container_name: znap-mysql-test
-    restart: "no"
+    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: pedidos_service_test
@@ -69,6 +70,36 @@ services:
       timeout: 5s
       retries: 10
 
+  api_test:
+    profiles: ["test"]
+    build: 
+      context: ./api
+    container_name: znap-api-test
+    restart: unless-stopped
+    environment:
+      # Variables for Postgrator
+      - NODE_ENV=testing
+      - DB_HOST_TEST=mysql_test
+      - DB_PORT_TEST=3306
+      - DB_USER_TEST=test_user
+      - DB_PASSWORD_TEST=test_password
+      - DB_DATABASE_TEST=pedidos_service_test
+
+      # Variables for server.ts
+      - MYSQL_CONNECTION_STRING=mysql://test_user:test_password@mysql_test:3306/pedidos_service_test
+      - PORT=7890
+    ports:
+      - "7890:7890"
+    volumes:
+      - ./api:/app
+      - /app/node_modules
+    depends_on:
+      mysql_test:
+        condition: service_healthy
+    command: >
+      sh -c "npm install && npm run migrate && npm run start:test"
+ 
+# Define a custom network to ensure containers can communicate
 networks:
   default:
     name: znap-network

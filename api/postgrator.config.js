@@ -1,7 +1,7 @@
-require('dotenv').config({ path: process.env.NODE_ENV === 'test' ? '.env.test' : '.env' });
+require('dotenv').config();
 
 // Determine if we're in test mode
-const isTestEnvironment = process.env.NODE_ENV === 'test';
+const isTestEnvironment = process.env.NODE_ENV === 'testing';
 
 module.exports = {
   migrationDirectory: './migrations',

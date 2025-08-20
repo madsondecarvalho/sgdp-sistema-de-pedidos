@@ -5,6 +5,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start:dev": "tsx src/server.ts",
+    "start:test": "NODE_ENV=testing tsx src/server.ts",
     "migrate": "postgrator --config postgrator.config.js",
     "migrate:up": "postgrator --config postgrator.config.js",
     "migrate:down": "postgrator --config postgrator.config.js --to 0"
