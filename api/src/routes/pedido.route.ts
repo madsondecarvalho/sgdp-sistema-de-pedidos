@@ -44,27 +44,4 @@ export async function pedidoRoutes(app: FastifyInstance) {
         url: '/pedidos/:id',
         handler: pedidoController.delete
     });
-
-    // Rotas para gerenciar itens do pedido
-
-    // Adicionar item ao pedido
-    app.route({
-        method: 'POST',
-        url: '/pedidos/:id/itens',
-        handler: pedidoController.addItem
-    });
-
-    // Atualizar item do pedido
-    app.route({
-        method: 'PUT',
-        url: '/pedidos/:id/itens/:produtoId',
-        handler: pedidoController.updateItem
-    });
-
-    // Remover item do pedido
-    app.route({
-        method: 'DELETE',
-        url: '/pedidos/:id/itens/:produtoId',
-        handler: pedidoController.removeItem
-    });
 }
