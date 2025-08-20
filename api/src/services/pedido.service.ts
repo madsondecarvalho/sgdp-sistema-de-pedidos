@@ -59,7 +59,7 @@ class PedidoService {
     }
 
     // Criar um novo pedido
-    async create(fastify: FastifyInstance, pedidoData: Omit<Pedido, 'id'>, itens: Omit<PedidoItem, 'id_pedido'>[]) {
+    async create(fastify: FastifyInstance, pedidoData: Omit<Pedido, 'id'>, itens: Omit<PedidoItem, 'id_pedido'>[], idempotency_key: string) {
         try {
             // Iniciar transação
             await (fastify as any).mysql.query('START TRANSACTION');
@@ -74,18 +74,22 @@ class PedidoService {
             );
 
             const dataFormatada = new Date(data).toLocaleString(['sv-SE']); //formato mysql
-
             // Inserir o pedido
             await (fastify as any).mysql.query(
-                'INSERT INTO pedidos (id, data, id_cliente) VALUES (?, ?, ?)',
-                [id, dataFormatada, id_cliente]
+                'INSERT INTO pedidos (id, data, id_cliente, idempotency_key) VALUES (?, ?, ?, ?)',
+                [id, dataFormatada, id_cliente, idempotency_key]
+            );
+
+            await (fastify as any).mysql.query(
+                'INSERT INTO pedidos_idempotency (idempotency_key, pedido_id) VALUES (?, ?)',
+                [idempotency_key, id]
             );
 
             // Inserir os itens do pedido
             if (itens && itens.length > 0) {
                 for (const item of itens) {
                     const itemProduto = produtosMap.get(item.id_produto);
-                    
+
                     if (!itemProduto) {
                         await (fastify as any).mysql.query('ROLLBACK');
                         return null;
