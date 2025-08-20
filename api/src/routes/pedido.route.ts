@@ -31,7 +31,8 @@ export async function pedidoRoutes(app: FastifyInstance) {
         handler: pedidoController.create
     });
 
-    // Rota para atualizar um pedido
+    // Rota para atualizar um pedido 
+    // TODO: Ajustar lógica de alterar pedido (itens do pedido)
     app.route({
         method: 'PUT',
         url: '/pedidos/:id',
