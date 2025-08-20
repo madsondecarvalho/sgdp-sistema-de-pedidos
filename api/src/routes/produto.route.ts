@@ -1,0 +1,70 @@
+import { FastifyInstance } from 'fastify';
+import { produtoController } from '../controllers/produto.controller';
+import { z } from 'zod/v4';
+import { ZodTypeProvider } from 'fastify-type-provider-zod';
+
+export async function produtoRoutes(app: FastifyInstance) {
+  // Rota para listar todos os produtos
+  app.route({
+    method: 'GET',
+    url: '/produtos',
+    handler: produtoController.getAll
+  });
+
+  // Rota para buscar produto por ID
+  app.withTypeProvider<ZodTypeProvider>().route({
+    method: 'GET',
+    url: '/produtos/:id',
+    schema: {
+      params: z.object({
+        id: z.uuid({ message: "O ID fornecido não é um UUID válido." })
+      })
+    },
+    handler: produtoController.getById
+  });
+
+  // Rota para criar um novo produto
+  app.withTypeProvider<ZodTypeProvider>().route({
+    method: 'POST',
+    url: '/produtos',
+    schema: {
+      body: z.object({
+        nome: z.string().describe('Nome do produto'),
+        descricao: z.string().optional().describe('Descrição do produto'),
+        preco: z.number().min(0).describe('Preço do produto'),
+        estoque: z.number().min(0).default(0).describe('Quantidade em estoque'),
+      })
+    },
+    handler: produtoController.create
+  });
+
+  // Rota para atualizar um produto
+  app.withTypeProvider<ZodTypeProvider>().route({
+    method: 'PUT',
+    url: '/produtos/:id',
+    handler: produtoController.update,
+    schema: {
+      body: z.object({
+        nome: z.string().optional().describe('Nome do produto'),
+        descricao: z.string().optional().describe('Descrição do produto'),
+        preco: z.number().min(0).optional().describe('Preço do produto'),
+        estoque: z.number().min(0).optional().describe('Quantidade em estoque'),
+      }),
+      params: z.object({
+        id: z.uuid({ message: "O ID fornecido não é um UUID válido." })
+      })
+    },
+  });
+
+  // Rota para excluir um produto
+  app.withTypeProvider<ZodTypeProvider>().route({
+    method: 'DELETE',
+    url: '/produtos/:id',
+    schema: {
+      params: z.object({
+        id: z.uuid({ message: "O ID fornecido não é um UUID válido." })
+      })
+    },
+    handler: produtoController.delete
+  });
+}
