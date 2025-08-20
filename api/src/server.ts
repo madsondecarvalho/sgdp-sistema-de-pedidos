@@ -1,9 +1,9 @@
+import 'dotenv/config';
 import Fastify from 'fastify';
 import fastifyMySQL from '@fastify/mysql';
 import { clientRoutes } from './routes/cliente.route';
 import { pedidoRoutes } from './routes/pedido.route';
 import { produtoRoutes } from './routes/produto.route';
-
 
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 
@@ -32,7 +32,7 @@ app.get('/', async (request, reply) => {
 
 // Registro do banco de dados
 app.register(fastifyMySQL, {
-  connectionString: 'mysql://znap_user:znap_password@localhost:3306/pedidos_service',
+  connectionString: process.env.MYSQL_CONNECTION_STRING,
   promise: true
 });
 
