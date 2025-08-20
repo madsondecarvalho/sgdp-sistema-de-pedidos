@@ -17,21 +17,61 @@ class PedidoService {
     }
 
     // Buscar um pedido pelo ID
-    async findById(fastify: FastifyInstance, id: string) {
+    async findById(fastify: FastifyInstance, id: string): Promise<any | null> {
         try {
-            const [rows] = await (fastify as any).mysql.query(
-                'SELECT * FROM pedidos WHERE id = ?',
-                [id]
-            );
+            // Consulta que une pedidos e seus itens
+            const sql = `
+                SELECT
+                    p.id as pedido_id,
+                    p.data,
+                    p.status,
+                    p.id_cliente,
+                    i.id_produto,
+                    i.qtde,
+                    i.preco
+                FROM
+                    pedidos p
+                LEFT JOIN
+                    pedido_itens i ON p.id = i.id_pedido
+                WHERE
+                    p.id = ?
+                `;
 
-            const pedidos = rows as any[];
-            if (pedidos.length === 0) return null;
+            const [rows] = await (fastify as any).mysql.query(sql, [id]);
+            const results = rows as any[];
 
-            const pedido = this.formatPedido(pedidos[0]);
+            if (results.length === 0) {
+                return null;
+            }
 
-            // Buscar os itens do pedido
-            const itens = await this.findItensByPedidoId(fastify, id);
-            return { ...pedido, itens };
+            const pedidoData = {
+                id: results[0].pedido_id,
+                data: results[0].data,
+                id_cliente: results[0].id_cliente,
+                status: results[0].status
+            };
+
+            const pedido = this.formatPedido(pedidoData);
+
+            const itensMap = new Map<string, any>();
+
+            for (const row of results) {
+                if (row.id_produto) {
+                    itensMap.set(row.id_produto, {
+                        id_pedido: row.pedido_id,
+                        id_produto: row.id_produto,
+                        qtde: row.qtde,
+                        preco: row.preco
+                    });
+                }
+            }
+
+            const itens = Array.from(itensMap.values());
+
+            return {
+                ...pedido,
+                itens
+            };
         } catch (error) {
             console.error(`Error in findById (${id}):`, error);
             throw error;
@@ -59,7 +99,7 @@ class PedidoService {
     }
 
     // Criar um novo pedido
-    async create(fastify: FastifyInstance, pedidoData: Omit<Pedido, 'id'>, itens: Omit<PedidoItem, 'id_pedido'>[], idempotency_key: string) {
+    async create(fastify: FastifyInstance, pedidoData: Omit<Pedido, 'id' | 'status' | 'itens'>, itens: Omit<PedidoItem, 'id_pedido'>[], idempotency_key: string) {
         try {
             // Iniciar transação
             await (fastify as any).mysql.query('START TRANSACTION');
@@ -73,7 +113,7 @@ class PedidoService {
                 produtos.map((produto: Produto) => [produto.id, produto])
             );
 
-            const dataFormatada = new Date(data).toLocaleString(['sv-SE']); //formato mysql
+            const dataFormatada = new Date(data).toLocaleString(['sv-SE']);
             // Inserir o pedido
             await (fastify as any).mysql.query(
                 'INSERT INTO pedidos (id, data, id_cliente, idempotency_key) VALUES (?, ?, ?, ?)',
@@ -118,24 +158,29 @@ class PedidoService {
     }
 
     // Atualizar um pedido existente
-    async update(fastify: FastifyInstance, id: string, data: Partial<Omit<Pedido, 'id'>>) {
+    async update(fastify: FastifyInstance, id: string, data: Partial<Omit<Pedido, 'id'>>, itens: Omit<PedidoItem, 'id_pedido'>[]) {
         try {
-            // Verificar se o pedido existe
+            await (fastify as any).mysql.query('START TRANSACTION');
+
             const existingPedido = await this.findById(fastify, id);
             if (!existingPedido) return null;
 
-            // Construir a query de atualização dinamicamente
             const updateParts = [];
             const values = [];
 
             if (data.data !== undefined) {
                 updateParts.push('data = ?');
-                values.push(data.data);
+                values.push(new Date(data.data).toLocaleString(['sv-SE']));
             }
 
             if (data.id_cliente !== undefined) {
                 updateParts.push('id_cliente = ?');
                 values.push(data.id_cliente);
+            }
+
+            if (data.status !== undefined) {
+                updateParts.push('status = ?');
+                values.push(data.status);
             }
 
             // Se não houver campos para atualizar, retorne o pedido existente
@@ -152,18 +197,21 @@ class PedidoService {
                 values
             );
 
-            // Retorna o pedido atualizado
+            await this.insertItensPedido(fastify, itens, id);
+
+            await (fastify as any).mysql.query('COMMIT');
+
             return this.findById(fastify, id);
         } catch (error) {
+            await (fastify as any).mysql.query('ROLLBACK');
+
             console.error(`Error in update (${id}):`, error);
             throw error;
         }
     }
 
-    // Excluir um pedido
     async delete(fastify: FastifyInstance, id: string): Promise<boolean> {
         try {
-            // Iniciar transação
             await (fastify as any).mysql.query('START TRANSACTION');
 
             // Excluir os itens do pedido
@@ -178,29 +226,26 @@ class PedidoService {
                 [id]
             );
 
-            // Commit da transação
             await (fastify as any).mysql.query('COMMIT');
 
             return (result as any).affectedRows > 0;
         } catch (error) {
-            // Rollback em caso de erro
             await (fastify as any).mysql.query('ROLLBACK');
             console.error(`Error in delete (${id}):`, error);
             throw error;
         }
     }
 
-    // Função auxiliar para formatar um pedido
-    private formatPedido(dbPedido: any): Pedido {
+    private formatPedido(dbPedido: any): Omit<Pedido, 'itens'> {
         return {
             id: dbPedido.id,
             data: new Date(dbPedido.data),
-            id_cliente: dbPedido.id_cliente
+            id_cliente: dbPedido.id_cliente,
+            status: dbPedido.status
         };
     }
 
-    // Função auxiliar para formatar uma lista de pedidos
-    private formatPedidoList(dbPedidos: any[]): Pedido[] {
+    private formatPedidoList(dbPedidos: any[]): Omit<Pedido, 'itens'>[] {
         return dbPedidos.map(pedido => this.formatPedido(pedido));
     }
 
@@ -212,7 +257,29 @@ class PedidoService {
         );
         return produtos;
     }
+
+    private async insertItensPedido(fastify: FastifyInstance, itens: Omit<PedidoItem, 'id_pedido'>[], idPedido: string) {
+        return await Promise.all(itens.map(async (pedidoItem) => {
+
+            const [produtos] = await (fastify as any).mysql.query(
+                'SELECT * FROM produtos WHERE id = ?',
+                [pedidoItem.id_produto]
+            );
+
+            const itemProduto = produtos[0];
+            const precoCalculado = itemProduto ? itemProduto.preco * pedidoItem.qtde : 0;
+
+            await (fastify as any).mysql.query(
+                'DELETE FROM pedido_itens WHERE id_pedido = ?',
+                [idPedido]
+            );
+
+            await (fastify as any).mysql.query(
+                'INSERT INTO pedido_itens (id_pedido, id_produto, qtde, preco) VALUES (?, ?, ?, ?)',
+                [idPedido, pedidoItem.id_produto, pedidoItem.qtde, precoCalculado]
+            );
+        }));
+    }
 }
 
-// Exportando uma instância única do serviço
 export const pedidoService = new PedidoService();

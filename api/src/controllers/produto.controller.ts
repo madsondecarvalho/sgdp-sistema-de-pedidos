@@ -37,26 +37,6 @@ export const produtoController = {
     try {
       const produtoData = request.body as any;
 
-      // Validação manual básica
-      if (!produtoData.nome || produtoData.preco === undefined) {
-        return reply.code(400).send({
-          message: 'Dados inválidos. Nome e preço são obrigatórios.'
-        });
-      }
-
-      // Validação adicional para preço e estoque
-      if (isNaN(produtoData.preco) || produtoData.preco < 0) {
-        return reply.code(400).send({
-          message: 'O preço deve ser um número válido e maior ou igual a zero.'
-        });
-      }
-
-      if (produtoData.estoque !== undefined && (isNaN(produtoData.estoque) || produtoData.estoque < 0)) {
-        return reply.code(400).send({
-          message: 'O estoque deve ser um número válido e maior ou igual a zero.'
-        });
-      }
-
       const newProduto = await produtoService.create(request.server, produtoData);
       return reply.code(201).send({ produto: newProduto });
     } catch (error: unknown) {

@@ -39,12 +39,6 @@ export const pedidoController = {
 
             const idempotencyKey = request.headers['idempotency-key'] as string;
 
-            if (!idempotencyKey) {
-                return reply.code(400).send({
-                    message: 'IDempotency key é obrigatório. Adicione o Header: idempotency-key'
-                });
-            }
-
             // Validação manual básica
             if (!pedido || !pedido.id_cliente) {
                 return reply.code(400).send({
@@ -72,9 +66,9 @@ export const pedidoController = {
     update: async (request: FastifyRequest, reply: FastifyReply) => {
         try {
             const { id } = request.params as { id: string };
-            const pedidoData = request.body as any;
+            const { pedido, itens } = request.body as any;
 
-            const updatedPedido = await pedidoService.update(request.server, id, pedidoData);
+            const updatedPedido = await pedidoService.update(request.server, id, pedido, itens);
 
             if (!updatedPedido) {
                 return reply.code(404).send({ message: 'Pedido não encontrado' });
