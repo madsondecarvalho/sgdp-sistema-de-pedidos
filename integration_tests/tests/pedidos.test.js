@@ -1,6 +1,6 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
-import { URL_BASE } from '../config.js';
+import { URL_BASE } from '../common/config.js';
 
 export function testarPedidosVazios() {
   console.log(`Testando endpoint: ${URL_BASE}/pedidos`);
@@ -31,9 +31,19 @@ export function testarPedidosVazios() {
   
   try {
     const data = JSON.parse(response.body);
+    
+    // Verificações para a chave pedidos
     check(response, {
       '[Pedidos] Corpo da resposta tem a chave "pedidos"': (r) => data.hasOwnProperty('pedidos'),
+      '[Pedidos] A propriedade "pedidos" é um array': (r) => Array.isArray(data.pedidos),
     });
+    
+    // Log adicional para debug
+    if (data.hasOwnProperty('pedidos')) {
+      console.log(`Tipo de pedidos: ${typeof data.pedidos}`);
+      console.log(`É array: ${Array.isArray(data.pedidos)}`);
+      console.log(`Quantidade de pedidos: ${Array.isArray(data.pedidos) ? data.pedidos.length : 'N/A'}`);
+    }
   } catch (e) {
     console.log(`Erro ao parsear JSON: ${e.message}`);
     console.log(`Body recebido: ${response.body}`);

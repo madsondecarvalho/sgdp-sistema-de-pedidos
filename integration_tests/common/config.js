@@ -1,1 +1,1 @@
-export const URL_BASE = process.env.API_URL || 'http://localhost:3334';
+export const URL_BASE = 'http://127.0.0.1:7890';

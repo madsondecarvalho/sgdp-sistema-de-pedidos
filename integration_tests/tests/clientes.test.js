@@ -1,6 +1,6 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
-import { URL_BASE } from '../config.js';
+import { URL_BASE } from '../common/config.js';
 
 // Exporta a função de teste para ser chamada pelo script principal.
 export function testarClientesVazios() {
@@ -32,9 +32,19 @@ export function testarClientesVazios() {
   
   try {
     const data = JSON.parse(response.body);
+    
+    // Verificações para a chave clients
     check(response, {
-      '[Clientes] Corpo da resposta tem a chave "clientes"': (r) => data.hasOwnProperty('clientes'),
+      '[Clientes] Corpo da resposta tem a chave "clients"': (r) => data.hasOwnProperty('clients'),
+      '[Clientes] A propriedade "clients" é um array': (r) => Array.isArray(data.clients),
     });
+    
+    // Log adicional para debug
+    if (data.hasOwnProperty('clients')) {
+      console.log(`Tipo de clients: ${typeof data.clients}`);
+      console.log(`É array: ${Array.isArray(data.clients)}`);
+      console.log(`Quantidade de clientes: ${Array.isArray(data.clients) ? data.clients.length : 'N/A'}`);
+    }
   } catch (e) {
     console.log(`Erro ao parsear JSON: ${e.message}`);
     console.log(`Body recebido: ${response.body}`);
