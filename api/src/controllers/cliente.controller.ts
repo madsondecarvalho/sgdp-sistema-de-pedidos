@@ -2,7 +2,6 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { clientService } from '../services/cliente.service';
 
 export const clientController = {
-  // Listar todos os clientes
   getAll: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const clients = await clientService.findAll(request.server);
@@ -14,7 +13,6 @@ export const clientController = {
     }
   },
 
-  // Obter um cliente pelo ID
   getById: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const { id } = request.params as { id: string };
@@ -32,12 +30,10 @@ export const clientController = {
     }
   },
 
-  // Criar um novo cliente
   create: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const clientData = request.body as any;
 
-      // Validação manual básica
       if (!clientData.nome || !clientData.email) {
         return reply.code(400).send({
           message: 'Dados inválidos. Nome e email são obrigatórios.'
@@ -53,7 +49,6 @@ export const clientController = {
     }
   },
 
-  // Atualizar um cliente existente
   update: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const { id } = request.params as { id: string };
@@ -73,7 +68,6 @@ export const clientController = {
     }
   },
 
-  // Excluir um cliente
   delete: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const { id } = request.params as { id: string };

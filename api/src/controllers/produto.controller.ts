@@ -2,7 +2,6 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { produtoService } from '../services/produto.service';
 
 export const produtoController = {
-  // Listar todos os produtos
   getAll: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const produtos = await produtoService.findAll(request.server);
@@ -14,7 +13,6 @@ export const produtoController = {
     }
   },
 
-  // Obter um produto pelo ID
   getById: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const { id } = request.params as { id: string };
@@ -32,7 +30,6 @@ export const produtoController = {
     }
   },
 
-  // Criar um novo produto
   create: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const produtoData = request.body as any;
@@ -46,7 +43,6 @@ export const produtoController = {
     }
   },
 
-  // Atualizar um produto existente
   update: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const { id } = request.params as { id: string };
@@ -79,7 +75,6 @@ export const produtoController = {
     }
   },
 
-  // Excluir um produto
   delete: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const { id } = request.params as { id: string };

@@ -3,6 +3,13 @@ import { produtoController } from '../controllers/produto.controller';
 import { z } from 'zod/v4';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
 
+const produtoSchema = z.object({
+  nome: z.string().describe('Nome do produto'),
+  descricao: z.string().optional().describe('Descrição do produto'),
+  preco: z.number().min(0).describe('Preço do produto'),
+  estoque: z.number().min(0).default(0).describe('Quantidade em estoque'),
+})
+
 export async function produtoRoutes(app: FastifyInstance) {
   // Rota para listar todos os produtos
   app.route({
@@ -28,28 +35,17 @@ export async function produtoRoutes(app: FastifyInstance) {
     method: 'POST',
     url: '/produtos',
     schema: {
-      body: z.object({
-        nome: z.string().describe('Nome do produto'),
-        descricao: z.string().optional().describe('Descrição do produto'),
-        preco: z.number().min(0).describe('Preço do produto'),
-        estoque: z.number().min(0).default(0).describe('Quantidade em estoque'),
-      })
+      body: produtoSchema
     },
     handler: produtoController.create
   });
 
-  // Rota para atualizar um produto
   app.withTypeProvider<ZodTypeProvider>().route({
     method: 'PUT',
     url: '/produtos/:id',
     handler: produtoController.update,
     schema: {
-      body: z.object({
-        nome: z.string().optional().describe('Nome do produto'),
-        descricao: z.string().optional().describe('Descrição do produto'),
-        preco: z.number().min(0).optional().describe('Preço do produto'),
-        estoque: z.number().min(0).optional().describe('Quantidade em estoque'),
-      }),
+      body: produtoSchema,
       params: z.object({
         id: z.uuid({ message: "O ID fornecido não é um UUID válido." })
       })

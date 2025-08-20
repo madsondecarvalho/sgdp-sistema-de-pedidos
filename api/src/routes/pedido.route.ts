@@ -13,14 +13,14 @@ const itemSchema = z.object({
 
     qtde: z.number({ error: "A quantidade (qtde) é obrigatória." })
         .int({ message: "A quantidade deve ser um número inteiro." })
-        .positive({ message: "A quantidade deve ser maior que zero." }), // Garante que a quantidade seja >= 1
+        .positive({ message: "A quantidade deve ser maior que zero." }),
 });
 
 const criarPedidoSchema = z.object({
     pedido: pedidoInfoSchema,
     itens: z.array(itemSchema, {
         error: "O campo 'itens' é obrigatório."
-    }).nonempty({ message: "O pedido deve ter pelo menos um item." }), // Garante que o array não seja vazio
+    }).nonempty({ message: "O pedido deve ter pelo menos um item." }), 
 });
 
 const headerSchemaIdempotencyRequired = z.object({

@@ -2,7 +2,6 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { pedidoService } from '../services/pedido.service';
 
 export const pedidoController = {
-    // Listar todos os pedidos
     getAll: async (request: FastifyRequest, reply: FastifyReply) => {
         try {
             const pedidos = await pedidoService.findAll(request.server);
@@ -14,7 +13,6 @@ export const pedidoController = {
         }
     },
 
-    // Obter um pedido pelo ID
     getById: async (request: FastifyRequest, reply: FastifyReply) => {
         try {
             const { id } = request.params as { id: string };
@@ -32,19 +30,11 @@ export const pedidoController = {
         }
     },
 
-    // Criar um novo pedido
     create: async (request: FastifyRequest, reply: FastifyReply) => {
         try {
             const { pedido, itens } = request.body as any;
 
             const idempotencyKey = request.headers['idempotency-key'] as string;
-
-            // Validação manual básica
-            if (!pedido || !pedido.id_cliente) {
-                return reply.code(400).send({
-                    message: 'Dados inválidos. ID do cliente é obrigatório.'
-                });
-            }
 
             const novoPedido = await pedidoService.create(request.server, {
                 data: pedido.data || new Date(),
@@ -62,7 +52,6 @@ export const pedidoController = {
         }
     },
 
-    // Atualizar um pedido existente
     update: async (request: FastifyRequest, reply: FastifyReply) => {
         try {
             const { id } = request.params as { id: string };
