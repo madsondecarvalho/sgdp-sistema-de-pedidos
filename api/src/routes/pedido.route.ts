@@ -3,7 +3,7 @@ import { pedidoController } from '../controllers/pedido.controller';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod/v4';
 
-
+//TODO: ADICIONAR VALIDAÇÕES
 export async function pedidoRoutes(app: FastifyInstance) {
     // Rota para listar todos os pedidos
     app.route({
