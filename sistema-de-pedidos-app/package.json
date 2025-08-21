@@ -1,5 +1,5 @@
 {
-  "name": "pedidos-app",
+  "name": "sistema-de-pedidos-app",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -14,7 +14,11 @@
     "type-check": "vue-tsc --build"
   },
   "dependencies": {
-    "vue": "^3.5.18"
+    "@mdi/font": "^7.4.47",
+    "vite-plugin-vuetify": "^2.1.2",
+    "vue": "^3.5.18",
+    "vue-router": "^4.5.1",
+    "vuetify": "^3.9.5"
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.2",
