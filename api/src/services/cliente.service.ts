@@ -6,7 +6,7 @@ class ClientService {
   // Listar todos os clientes
   async findAll(fastify: FastifyInstance) {
     try {
-      const [rows] = await (fastify as any).mysql.query('SELECT * FROM clientes');
+      const [rows] = await (fastify as any).mysql.query('SELECT * FROM clientes WHERE deleted_at IS NULL');
       return this.formatClientList(rows as any[]);
     } catch (error) {
       console.error('Error in findAll:', error);
@@ -18,7 +18,7 @@ class ClientService {
   async findById(fastify: FastifyInstance, id: string) {
     try {
       const [rows] = await (fastify as any).mysql.query(
-        'SELECT * FROM clientes WHERE id = ?',
+        'SELECT * FROM clientes WHERE id = ? AND deleted_at IS NULL',
         [id]
       );
 
@@ -97,13 +97,13 @@ class ClientService {
   async delete(fastify: FastifyInstance, id: string): Promise<boolean> {
     try {
       const [result] = await (fastify as any).mysql.query(
-        'DELETE FROM clientes WHERE id = ?',
+        'UPDATE clientes SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL',
         [id]
       );
 
       return (result as any).affectedRows > 0;
     } catch (error) {
-      console.error(`Error in delete (${id}):`, error);
+      console.error(`Error in soft delete (${id}):`, error);
       throw error;
     }
   }

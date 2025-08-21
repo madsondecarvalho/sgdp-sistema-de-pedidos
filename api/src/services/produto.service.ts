@@ -6,7 +6,7 @@ class ProdutoService {
   // Listar todos os produtos
   async findAll(fastify: FastifyInstance) {
     try {
-      const [rows] = await (fastify as any).mysql.query('SELECT * FROM produtos');
+      const [rows] = await (fastify as any).mysql.query('SELECT * FROM produtos WHERE deleted_at IS NULL');
       return this.formatProdutoList(rows as any[]);
     } catch (error) {
       console.error('Error in findAll:', error);
@@ -18,7 +18,7 @@ class ProdutoService {
   async findById(fastify: FastifyInstance, id: string) {
     try {
       const [rows] = await (fastify as any).mysql.query(
-        'SELECT * FROM produtos WHERE id = ?',
+        'SELECT * FROM produtos WHERE id = ? AND deleted_at IS NULL',
         [id]
       );
 
@@ -82,7 +82,7 @@ class ProdutoService {
 
       // Executa a query de atualização
       await (fastify as any).mysql.query(
-        `UPDATE produtos SET ${updateParts.join(', ')} WHERE id = ?`,
+        `UPDATE produtos SET ${updateParts.join(', ')} WHERE id = ? AND deleted_at IS NULL`,
         values
       );
 
@@ -98,7 +98,7 @@ class ProdutoService {
   async delete(fastify: FastifyInstance, id: string): Promise<boolean> {
     try {
       const [result] = await (fastify as any).mysql.query(
-        'DELETE FROM produtos WHERE id = ?',
+        'UPDATE produtos SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL',
         [id]
       );
 
