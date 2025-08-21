@@ -12,7 +12,7 @@ const vuetifyConfig: VuetifyOptions = {
       light: {
         dark: false,
         colors: {
-          primary: '#1976D2', // Azul
+          primary: '#008165ff', // Azul
           secondary: '#424242', // Cinza escuro
         }
       }
