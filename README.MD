@@ -112,7 +112,7 @@ Com o ambiente de teste rodando, abra um novo terminal na pasta do projeto e exe
 
 Bash
 
-# Exemplo de comando - ajuste o caminho para o seu script
+# Comando para rodar os testes com K6
 ```bash
 k6 run ./integration_tests/run.js
 ```
