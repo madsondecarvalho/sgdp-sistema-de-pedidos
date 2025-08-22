@@ -7,7 +7,7 @@
     transition="dialog-bottom-transition"
   >
     <v-card rounded="lg">
-      <v-toolbar color="primary" density="compact">
+      <v-toolbar class="pl-4" color="primary" density="compact">
         <v-icon start>mdi-package-variant-plus</v-icon>
         <v-toolbar-title class="text-h6 font-weight-light">
           Novo Produto
