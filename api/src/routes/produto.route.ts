@@ -12,9 +12,14 @@ const produtoSchema = z.object({
 
 export async function produtoRoutes(app: FastifyInstance) {
   // Rota para listar todos os produtos
-  app.route({
+  app.withTypeProvider<ZodTypeProvider>().route({
     method: 'GET',
     url: '/produtos',
+    schema: {
+      querystring: z.object({
+        search: z.string().optional().describe('Termo de busca para filtrar produtos por nome')
+      })
+    },
     handler: produtoController.getAll
   });
 

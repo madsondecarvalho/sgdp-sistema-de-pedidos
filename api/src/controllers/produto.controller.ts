@@ -4,7 +4,11 @@ import { produtoService } from '../services/produto.service';
 export const produtoController = {
   getAll: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const produtos = await produtoService.findAll(request.server);
+      // Extrair o parâmetro search da query URL
+      const query = request.query as { search?: string };
+      const searchTerm = query.search || '';
+      
+      const produtos = await produtoService.findAll(request.server, searchTerm);
       return reply.code(200).send({ produtos });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';

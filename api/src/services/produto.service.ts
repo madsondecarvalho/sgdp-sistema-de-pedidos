@@ -3,10 +3,23 @@ import { v4 as uuidv4 } from 'uuid';
 import { Produto } from '../entities/produto.entity';
 
 class ProdutoService {
-  // Listar todos os produtos
-  async findAll(fastify: FastifyInstance) {
+  // Listar todos os produtos, com filtro de busca opcional
+  async findAll(fastify: FastifyInstance, search?: string) {
     try {
-      const [rows] = await (fastify as any).mysql.query('SELECT * FROM produtos WHERE deleted_at IS NULL');
+      let query = 'SELECT * FROM produtos WHERE deleted_at IS NULL';
+      const params: any[] = [];
+
+      // Se tiver um termo de busca, adiciona a condição LIKE apenas para o nome
+      if (search && search.trim() !== '') {
+        query += ' AND nome LIKE ?';
+        const searchTerm = `%${search}%`;
+        params.push(searchTerm);
+      }
+
+      // Adiciona ordenação por nome
+      query += ' ORDER BY nome ASC';
+
+      const [rows] = await (fastify as any).mysql.query(query, params);
       return this.formatProdutoList(rows as any[]);
     } catch (error) {
       console.error('Error in findAll:', error);
