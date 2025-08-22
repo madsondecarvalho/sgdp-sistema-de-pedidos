@@ -8,7 +8,7 @@ const pedidoInfoSchema = z.object({
     data: z.coerce.date({ error: "A data é obrigatória." }),
     status: z.enum(["EM_ANALISE", "CONFIRMADO", "CANCELADO"], {
         error: "O status deve ser um dos seguintes: EM_ANALISE, CONFIRMADO, CANCELADO."
-    })
+    }).optional()
 });
 
 const itemSchema = z.object({
