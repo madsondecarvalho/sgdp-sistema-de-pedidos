@@ -50,6 +50,25 @@ services:
     command: >
       sh -c "npm install && npm run migrate && npm run start:dev"
 
+  # Frontend Vue.js application
+  frontend:
+    profiles: ["dev"]
+    build:
+      context: ./sistema-de-pedidos-app
+      dockerfile: Dockerfile.dev
+    container_name: znap-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173" # Vite default port
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:3333
+    volumes:
+      - ./sistema-de-pedidos-app:/app
+      - /app/node_modules
+    depends_on:
+      - api_dev
+
   # Test MySQL instance for integration tests
   mysql_test:
     profiles: ["test"]
