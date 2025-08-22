@@ -2,15 +2,17 @@
   <div>
     <h1 class="text-h5 font-weight-bold mb-4">Pedidos</h1>
     
-    <v-progress-circular
-      v-if="loading"
-      indeterminate
-      color="primary"
-      class="ma-4"
-    ></v-progress-circular>
+    <div v-if="loading" class="text-center pa-12">
+      <v-progress-circular
+        indeterminate
+        color="primary"
+        size="64"
+      ></v-progress-circular>
+      <p class="mt-4 text-medium-emphasis">Carregando pedidos...</p>
+    </div>
     
     <v-alert
-      v-if="error"
+      v-if="!loading && error"
       type="error"
       class="mb-4"
       variant="tonal"
@@ -25,6 +27,7 @@
         :items="pedidos"
         :items-per-page="10"
         class="elevation-1"
+        no-data-text="Nenhum pedido encontrado."
       >
         <template v-slot:top>
           <v-toolbar flat>
@@ -41,6 +44,17 @@
           </v-toolbar>
         </template>
         
+        <template v-slot:item.id="{ item }">
+          <a
+            href="#"
+            class="font-weight-bold text-primary"
+            style="text-decoration: underline; cursor: pointer;"
+            @click.prevent="abrirModalDetalhes(item)"
+          >
+            {{ item.id.substring(0, 8) }}...
+          </a>
+        </template>
+
         <template v-slot:item.data="{ item }">
           <span>{{ formatDateTime(item.data) }}</span>
         </template>
@@ -56,60 +70,34 @@
         
         <template v-slot:item.actions="{ item }">
           <div class="d-flex">
-            <v-btn
-              icon="mdi-pencil"
-              variant="text"
-              density="comfortable"
-              class="mr-2"
-              @click="editItem(item)"
-              title="Editar Pedido"
-            ></v-btn>
-            <v-btn
-              icon="mdi-delete"
-              variant="text"
-              density="comfortable"
-              color="error"
-              @click="confirmDeleteItem(item)"
-              title="Excluir Pedido"
-            ></v-btn>
+            <v-btn icon="mdi-eye" variant="text" density="comfortable" @click="abrirModalDetalhes(item)" title="Ver Detalhes"></v-btn>
+            <v-btn icon="mdi-pencil" variant="text" density="comfortable" class="mx-1" @click="editItem(item)" title="Editar Status"></v-btn>
           </div>
         </template>
       </v-data-table>
     </v-card>
 
+    <DetalhesPedido
+      v-model="modalDetalhes"
+      :pedido-id="pedidoSelecionado?.id"
+    />
     <CriarPedido 
-      v-model="modalNovoPedido"
-      @pedido-criado="handlePedidoCriado"
-      @error="handleError"
+      v-model="modalNovoPedido" 
+      @pedido-criado="handlePedidoCriado" 
+      @error="handleError" 
+    />
+    <AtualizarPedido 
+      v-if="pedidoSelecionado"
+      v-model="modalAtualizarPedido" 
+      :pedido="pedidoSelecionado" 
+      @pedido-atualizado="handlePedidoAtualizado" 
+      @error="handleError" 
     />
 
-    <AtualizarPedido
-      v-model="modalAtualizarPedido"
-      :pedido="pedidoSelecionado"
-      @pedido-atualizado="handlePedidoAtualizado"
-      @error="handleError"
-    />
-
-    <DeletarPedido
-      v-model="modalDeletarPedido"
-      :pedido="pedidoSelecionado"
-      @pedido-excluido="handlePedidoExcluido"
-      @error="handleError"
-    />
-
-    <v-snackbar
-      v-model="snackbar.show"
-      :color="snackbar.color"
-      :timeout="3000"
-      location="top right"
-    >
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="3000" location="top right">
       {{ snackbar.text }}
       <template v-slot:actions>
-        <v-btn
-          icon="mdi-close"
-          variant="text"
-          @click="snackbar.show = false"
-        ></v-btn>
+        <v-btn icon="mdi-close" variant="text" @click="snackbar.show = false"></v-btn>
       </template>
     </v-snackbar>
   </div>
@@ -118,12 +106,11 @@
 <script setup lang="ts">
 import { ref, onMounted, reactive } from 'vue';
 import axios from 'axios';
-// IMPORTANTE: Modais a serem criados para a entidade 'Pedido'
+
 import CriarPedido from './modals/CriarPedido.vue';
 import AtualizarPedido from './modals/AtualizarPedido.vue';
-import DeletarPedido from './modals/DeletarPedido.vue';
+import DetalhesPedido from './modals/DetalhesPedido.vue';
 
-// 1. Interface atualizada para Pedido
 interface Pedido {
   id: string;
   data: string;
@@ -131,19 +118,14 @@ interface Pedido {
   status: string;
 }
 
-// Estado
 const pedidos = ref<Pedido[]>([]);
 const loading = ref(true);
 const error = ref('');
 const modalNovoPedido = ref(false);
 const modalAtualizarPedido = ref(false);
 const modalDeletarPedido = ref(false);
-const pedidoSelecionado = ref<Pedido>({
-  id: '',
-  data: '',
-  id_cliente: '',
-  status: ''
-});
+const modalDetalhes = ref(false);
+const pedidoSelecionado = ref<Pedido | null>(null);
 
 const snackbar = reactive({
   show: false,
@@ -151,41 +133,37 @@ const snackbar = reactive({
   color: 'success'
 });
 
-// 2. Colunas da tabela atualizadas para Pedido
 const headers = [
-  { title: 'Cliente (ID)', key: 'id_cliente', width: '40%' },
+  { title: 'ID do Pedido', key: 'id', width: '25%' },
   { title: 'Data do Pedido', key: 'data' },
   { title: 'Status', key: 'status' },
-  { title: 'Ações', key: 'actions', sortable: false, align: 'end' }
+  { title: 'Ações', key: 'actions', sortable: false, align: 'end', width: '150px' }
 ] as const;
 
-// 3. Funções de formatação para os novos tipos de dados
+// --- FUNÇÕES ESSENCIAIS ---
+
 const formatDateTime = (isoString: string) => {
   if (!isoString) return 'N/A';
   return new Date(isoString).toLocaleString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
   });
 };
 
 const getStatusChipProps = (status: string) => {
   switch (status) {
-    case 'EM_ANALISE':
-      return { color: 'orange', text: 'Em Análise' };
-    case 'APROVADO':
-      return { color: 'success', text: 'Aprovado' };
-    case 'CANCELADO':
-      return { color: 'error', text: 'Cancelado' };
-    default:
-      return { color: 'grey', text: status };
+    case 'EM_ANALISE': return { color: 'orange', text: 'Em Análise' };
+    case 'APROVADO': return { color: 'success', text: 'Aprovado' };
+    case 'CANCELADO': return { color: 'error', text: 'Cancelado' };
+    case 'ENVIADO': return { color: 'info', text: 'Enviado' };
+    case 'ENTREGUE': return { color: 'primary', text: 'Entregue' };
+    default: return { color: 'grey', text: status };
   }
 };
 
-// 4. Lógica da API atualizada para o endpoint de Pedidos
 const fetchPedidos = async () => {
+  // Adicione um log para depuração
+  console.log('Iniciando busca de pedidos...');
   try {
     loading.value = true;
     error.value = '';
@@ -194,6 +172,7 @@ const fetchPedidos = async () => {
     
     if (response.data && response.data.pedidos) {
       pedidos.value = response.data.pedidos;
+      console.log('Pedidos carregados com sucesso:', response.data.pedidos);
     } else {
       throw new Error('Formato de resposta da API de pedidos é inválido');
     }
@@ -201,15 +180,15 @@ const fetchPedidos = async () => {
     console.error('Erro ao buscar pedidos:', err);
     error.value = `Não foi possível carregar os pedidos: ${err.message || 'Erro desconhecido'}`;
   } finally {
+    // ESSA LINHA É CRUCIAL e garante que o loading pare
     loading.value = false;
+    console.log('Busca de pedidos finalizada.');
   }
 };
 
-// Métodos para CRUD (nomes atualizados)
-const abrirNovoPedidoModal = () => {
-  modalNovoPedido.value = true;
-};
+// --- Funções de Manipulação de CRUD e Modais ---
 
+const abrirNovoPedidoModal = () => { modalNovoPedido.value = true; };
 const handlePedidoCriado = async () => {
   snackbar.text = 'Pedido adicionado com sucesso!';
   snackbar.color = 'success';
@@ -247,7 +226,16 @@ const confirmDeleteItem = (item: Pedido) => {
   modalDeletarPedido.value = true;
 };
 
+const abrirModalDetalhes = (item: Pedido) => {
+  pedidoSelecionado.value = item;
+  modalDetalhes.value = true;
+};
+
+// --- Gatilho Inicial ---
+
+// ESSA É A LINHA QUE INICIA TODO O PROCESSO
 onMounted(() => {
+  console.log('Componente PedidosIndex montado. Chamando fetchPedidos...');
   fetchPedidos();
 });
 </script>

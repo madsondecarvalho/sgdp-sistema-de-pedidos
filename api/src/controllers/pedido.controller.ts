@@ -57,6 +57,8 @@ export const pedidoController = {
             const { id } = request.params as { id: string };
             const { pedido, itens } = request.body as any;
 
+            console.info(`Iniciando atualização do pedido com ID: ${id} e body: ${JSON.stringify(request.body)}`);
+
             const updatedPedido = await pedidoService.update(request.server, id, pedido, itens);
 
             if (!updatedPedido) {

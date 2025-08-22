@@ -10,7 +10,7 @@ export interface Pedido {
   id: string;
   data: Date;
   id_cliente: string;
-  status: PedidoStatus; 
+  status: string; 
   itens: PedidoItem[];
   nome_cliente: string;
   email_cliente: string;

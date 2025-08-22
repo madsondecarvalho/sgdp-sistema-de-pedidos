@@ -6,6 +6,9 @@ import { z } from 'zod/v4';
 const pedidoInfoSchema = z.object({
     id_cliente: z.uuid({ message: "O id_cliente deve ser um UUID válido." }),
     data: z.coerce.date({ error: "A data é obrigatória." }),
+    status: z.enum(["EM_ANALISE", "CONFIRMADO", "CANCELADO"], {
+        error: "O status deve ser um dos seguintes: EM_ANALISE, CONFIRMADO, CANCELADO."
+    })
 });
 
 const itemSchema = z.object({
