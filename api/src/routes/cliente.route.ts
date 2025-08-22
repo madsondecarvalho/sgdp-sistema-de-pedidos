@@ -9,9 +9,14 @@ const clientSchema = z.object({
 })
 
 export async function clientRoutes(app: FastifyInstance) {
-  app.route({
+  app.withTypeProvider<ZodTypeProvider>().route({
     method: 'GET',
     url: '/clientes',
+    schema: {
+      querystring: z.object({
+        search: z.string().optional().describe('Termo de busca para filtrar clientes por nome ou email')
+      })
+    },
     handler: clientController.getAll
   });
 

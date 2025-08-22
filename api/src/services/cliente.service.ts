@@ -3,10 +3,23 @@ import { v4 as uuidv4 } from 'uuid';
 import { Client } from '../entities/cliente.entity';
 
 class ClientService {
-  // Listar todos os clientes
-  async findAll(fastify: FastifyInstance) {
+  // Listar todos os clientes, com filtro de busca opcional
+  async findAll(fastify: FastifyInstance, search?: string) {
     try {
-      const [rows] = await (fastify as any).mysql.query('SELECT * FROM clientes WHERE deleted_at IS NULL');
+      let query = 'SELECT * FROM clientes WHERE deleted_at IS NULL';
+      const params: any[] = [];
+
+      // Se tiver um termo de busca, adiciona a condição LIKE para nome e email
+      if (search && search.trim() !== '') {
+        query += ' AND (nome LIKE ? OR email LIKE ?)';
+        const searchTerm = `%${search}%`;
+        params.push(searchTerm, searchTerm);
+      }
+
+      // Adiciona ordenação por nome
+      query += ' ORDER BY nome ASC';
+
+      const [rows] = await (fastify as any).mysql.query(query, params);
       return this.formatClientList(rows as any[]);
     } catch (error) {
       console.error('Error in findAll:', error);
@@ -111,7 +124,7 @@ class ClientService {
   // Função auxiliar para formatar um cliente (converter snake_case para camelCase)
   private formatClient(dbClient: any): Client {
     return {
-      id: dbClient.id, // Corrigido: agora usa o campo id em vez de id_cliente
+      id: dbClient.id,
       nome: dbClient.nome,
       email: dbClient.email,
       createdAt: dbClient.created_at ? new Date(dbClient.created_at).toISOString() as string : undefined,
