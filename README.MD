@@ -67,16 +67,15 @@ Antes de começar, garanta que você tem as seguintes ferramentas instaladas:
 
 1.  **Clone o repositório:**
     ```bash
-    git clone [https://github.com/](https://github.com/)[SEU_USUARIO_GITHUB]/[NOME_DO_REPOSITORIO].git
+    git clone https://github.com/madsondecarvalho/sgdp-sistema-de-pedidos
     ```
 2.  **Navegue até a pasta do projeto:**
     ```bash
-    cd [NOME_DO_REPOSITORIO]
+    cd sgdp-sistema-de-pedidos
     ```
-3.  **(Opcional) Configure as variáveis de ambiente:**
-    Se houver um arquivo `.env.example`, copie-o para `.env` e ajuste as variáveis se necessário.
+3.  **Adicione o env da API**
     ```bash
-    cp .env.example .env
+    cp ./api/env.example ./api/.env
     ```
 
 ---
