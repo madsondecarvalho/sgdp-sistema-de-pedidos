@@ -34,7 +34,7 @@
             <v-btn
               color="primary"
               prepend-icon="mdi-plus"
-              @click="novoCliente"
+              @click="abrirNovoClienteModal"
             >
               Novo Cliente
             </v-btn>
@@ -61,12 +61,37 @@
         </template>
       </v-data-table>
     </v-card>
+
+    <!-- Modal de Criar Cliente (usando componente) -->
+    <CriarCliente 
+      v-model="modalNovoCliente"
+      @cliente-criado="handleClienteCriado"
+      @error="handleError"
+    />
+
+    <!-- Snackbar para mensagens de sucesso/erro -->
+    <v-snackbar
+      v-model="snackbar.show"
+      :color="snackbar.color"
+      :timeout="3000"
+    >
+      {{ snackbar.text }}
+      <template v-slot:actions>
+        <v-btn
+          variant="text"
+          @click="snackbar.show = false"
+        >
+          Fechar
+        </v-btn>
+      </template>
+    </v-snackbar>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, reactive } from 'vue';
 import axios from 'axios';
+import CriarCliente from './modals/CriarCliente.vue';
 
 interface Cliente {
   id: string;
@@ -80,6 +105,12 @@ interface Cliente {
 const clientes = ref<Cliente[]>([]);
 const loading = ref(true);
 const error = ref('');
+const modalNovoCliente = ref(false);
+const snackbar = reactive({
+  show: false,
+  text: '',
+  color: 'success'
+});
 
 // Definição das colunas da tabela - apenas nome e email serão exibidos
 const headers = [
@@ -111,9 +142,25 @@ const fetchClientes = async () => {
 };
 
 // Métodos para CRUD
-const novoCliente = () => {
-  // Implementar lógica para adicionar novo cliente
-  console.log('Adicionar novo cliente');
+const abrirNovoClienteModal = () => {
+  modalNovoCliente.value = true;
+};
+
+const handleClienteCriado = async () => {
+  // Mostrar mensagem de sucesso
+  snackbar.text = 'Cliente adicionado com sucesso!';
+  snackbar.color = 'success';
+  snackbar.show = true;
+  
+  // Recarregar a lista de clientes
+  await fetchClientes();
+};
+
+const handleError = (mensagem: string) => {
+  // Mostrar mensagem de erro
+  snackbar.text = `Erro ao salvar cliente: ${mensagem}`;
+  snackbar.color = 'error';
+  snackbar.show = true;
 };
 
 const editItem = (item: Cliente) => {
