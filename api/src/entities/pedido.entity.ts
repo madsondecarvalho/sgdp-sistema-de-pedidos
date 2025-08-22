@@ -12,4 +12,6 @@ export interface Pedido {
   id_cliente: string;
   status: PedidoStatus; 
   itens: PedidoItem[];
+  nome_cliente: string;
+  email_cliente: string;
 }

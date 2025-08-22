@@ -28,11 +28,15 @@ class PedidoService {
                     p.id_cliente,
                     i.id_produto,
                     i.qtde,
-                    i.preco
+                    i.preco,
+                    c.nome as nome_cliente,
+                    c.email as email_cliente
                 FROM
                     pedidos p
                 LEFT JOIN
                     pedido_itens i ON p.id = i.id_pedido
+                LEFT JOIN
+                    clientes c ON p.id_cliente = c.id
                 WHERE
                     p.id = ?
                 `;
@@ -48,7 +52,9 @@ class PedidoService {
                 id: results[0].pedido_id,
                 data: results[0].data,
                 id_cliente: results[0].id_cliente,
-                status: results[0].status
+                status: results[0].status,
+                nome_cliente: results[0].nome_cliente,
+                email_cliente: results[0].email_cliente
             };
 
             const pedido = this.formatPedido(pedidoData);
@@ -241,7 +247,9 @@ class PedidoService {
             id: dbPedido.id,
             data: new Date(dbPedido.data),
             id_cliente: dbPedido.id_cliente,
-            status: dbPedido.status
+            status: dbPedido.status,
+            nome_cliente: dbPedido.nome_cliente,
+            email_cliente: dbPedido.email_cliente
         };
     }
 
