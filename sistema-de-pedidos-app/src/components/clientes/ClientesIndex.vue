@@ -55,17 +55,33 @@
               variant="text"
               density="comfortable"
               color="error"
-              @click="deleteItem(item)"
+              @click="confirmDeleteItem(item)"
             ></v-btn>
           </div>
         </template>
       </v-data-table>
     </v-card>
 
-    <!-- Modal de Criar Cliente (usando componente) -->
+    <!-- Modal de Criar Cliente -->
     <CriarCliente 
       v-model="modalNovoCliente"
       @cliente-criado="handleClienteCriado"
+      @error="handleError"
+    />
+
+    <!-- Modal de Atualizar Cliente -->
+    <AtualizarCliente
+      v-model="modalAtualizarCliente"
+      :cliente="clienteSelecionado"
+      @cliente-atualizado="handleClienteAtualizado"
+      @error="handleError"
+    />
+
+    <!-- Modal de Excluir Cliente -->
+    <DeletarCliente
+      v-model="modalDeletarCliente"
+      :cliente="clienteSelecionado"
+      @cliente-excluido="handleClienteExcluido"
       @error="handleError"
     />
 
@@ -92,6 +108,8 @@
 import { ref, onMounted, reactive } from 'vue';
 import axios from 'axios';
 import CriarCliente from './modals/CriarCliente.vue';
+import AtualizarCliente from './modals/AtualizarCliente.vue';
+import DeletarCliente from './modals/DeletarCliente.vue';
 
 interface Cliente {
   id: string;
@@ -106,6 +124,16 @@ const clientes = ref<Cliente[]>([]);
 const loading = ref(true);
 const error = ref('');
 const modalNovoCliente = ref(false);
+const modalAtualizarCliente = ref(false);
+const modalDeletarCliente = ref(false);
+const clienteSelecionado = ref<Cliente>({
+  id: '',
+  nome: '',
+  email: '',
+  createdAt: '',
+  updatedAt: ''
+});
+
 const snackbar = reactive({
   show: false,
   text: '',
@@ -156,21 +184,43 @@ const handleClienteCriado = async () => {
   await fetchClientes();
 };
 
+const handleClienteAtualizado = async () => {
+  // Mostrar mensagem de sucesso
+  snackbar.text = 'Cliente atualizado com sucesso!';
+  snackbar.color = 'success';
+  snackbar.show = true;
+  
+  // Recarregar a lista de clientes
+  await fetchClientes();
+};
+
+const handleClienteExcluido = async () => {
+  // Mostrar mensagem de sucesso
+  snackbar.text = 'Cliente excluído com sucesso!';
+  snackbar.color = 'success';
+  snackbar.show = true;
+  
+  // Recarregar a lista de clientes
+  await fetchClientes();
+};
+
 const handleError = (mensagem: string) => {
   // Mostrar mensagem de erro
-  snackbar.text = `Erro ao salvar cliente: ${mensagem}`;
+  snackbar.text = `Erro: ${mensagem}`;
   snackbar.color = 'error';
   snackbar.show = true;
 };
 
 const editItem = (item: Cliente) => {
-  // Implementar lógica para editar cliente
-  console.log('Editar cliente:', item.nome);
+  // Definir o cliente selecionado e abrir modal
+  clienteSelecionado.value = { ...item }; // Cria uma cópia para não modificar direto
+  modalAtualizarCliente.value = true;
 };
 
-const deleteItem = (item: Cliente) => {
-  // Implementar lógica para excluir cliente
-  console.log('Excluir cliente:', item.nome);
+const confirmDeleteItem = (item: Cliente) => {
+  // Definir o cliente selecionado e abrir modal de confirmação
+  clienteSelecionado.value = { ...item };
+  modalDeletarCliente.value = true;
 };
 
 // Buscar dados quando o componente for montado
