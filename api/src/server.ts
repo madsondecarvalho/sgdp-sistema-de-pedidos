@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import Fastify from 'fastify';
 import fastifyMySQL from '@fastify/mysql';
+import fastifyCors from '@fastify/cors'; // Importe o plugin CORS
 import { clientRoutes } from './routes/cliente.route';
 import { pedidoRoutes } from './routes/pedido.route';
 import { produtoRoutes } from './routes/produto.route';
@@ -9,6 +10,14 @@ import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod
 
 const app = Fastify({
   logger: true
+});
+
+app.register(fastifyCors, {
+  origin: true,
+  // origin: 'http://seu-frontend.com',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'idempotency-key'],
+  credentials: true
 });
 
 // Add schema validator and serializer
